@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebScraper Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1 class="header-title">Scraping Dashboard</h1>
+                <p class="header-subtitle">Manage and monitor your web scraping automation</p>
+            </div>
+            
+            <div class="header-actions">
+                <form method="GET" style="display: flex; gap: 12px;">
+                    <div class="search-wrapper">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" name="search" class="search-input" placeholder="Search jobs..." value="{{ search_query }}">
+                    </div>
+                    <button type="submit" class="btn btn-secondary">Search</button>
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Clear</a>
+                </form>
+                <button onclick="openModal('createModal')" class="btn btn-primary">+ New Job</button>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}">
+                        <span>{{ '✓' if category == 'success' else '⚠' }}</span>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+
+        <div class="jobs-grid">
+            {% for job in jobs %}
+            <div class="job-card">
+                <div class="job-header">
+                    <div>
+                        <div class="job-title">{{ job.name }}</div>
+                        <div class="job-id">{{ job.id }}</div>
+                    </div>
+                    <div class="job-status">READY</div>
+                </div>
+                
+                <div class="job-details">
+                    <div class="detail-item">
+                        <span class="detail-icon">🌐</span>
+                        <div class="detail-content">
+                            <div class="detail-label">Target URL</div>
+                            <div class="detail-value">
+                                <a href="{{ job.url }}" target="_blank">{{ job.url }}</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="detail-icon">⏰</span>
+                        <div class="detail-content">
+                            <div class="detail-label">Created</div>
+                            <div class="detail-value timestamp">{{ job.created_at }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <span class="detail-icon">🤖</span>
+                        <div class="detail-content">
+                            <div class="detail-label">Automation Script</div>
+                            <div class="code-block">{{ job.selenium_instructions or 'No automation script defined' }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="job-actions">
+                    <button onclick="openEditModal('{{ job.id }}', '{{ job.name }}', '{{ job.url }}', {{ job.selenium_instructions|tojson }})" class="btn btn-success">Edit</button>
+                    <form method="POST" action="{{ url_for('delete_job', job_id=job.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this job?')">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">🤖</div>
+                <h3 class="empty-title">No scraping jobs found</h3>
+                <p class="empty-description">
+                    {% if search_query %}
+                        No jobs match your search query. Try adjusting your search terms.
+                    {% else %}
+                        Create your first web scraping job to get started with automation.
+                    {% endif %}
+                </p>
+                {% if not search_query %}
+                    <button onclick="openModal('createModal')" class="btn btn-primary">Create First Job</button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('createModal')">&times;</span>
+            <h2>Create New Scraping Job</h2>
+            <form method="POST" action="{{ url_for('create_job') }}">
+                <div class="form-group">
+                    <label for="name">Job Name</label>
+                    <input type="text" id="name" name="name" required placeholder="e.g., News Articles Scraper">
+                </div>
+                <div class="form-group">
+                    <label for="url">Target URL</label>
+                    <input type="url" id="url" name="url" required placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="selenium_instructions">Automation Script</label>
+                    <textarea id="selenium_instructions" name="selenium_instructions" placeholder="// Define your scraping automation steps
+driver.get(url)
+element = driver.find_element(By.CLASS_NAME, 'content')
+data = element.text
+return data"></textarea>
+                </div>
+                <div style="text-align: right; margin-top: 24px;">
+                    <button type="button" onclick="closeModal('createModal')" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Job</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('editModal')">&times;</span>
+            <h2>Edit Scraping Job</h2>
+            <form method="POST" id="editForm">
+                <div class="form-group">
+                    <label for="edit_name">Job Name</label>
+                    <input type="text" id="edit_name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_url">Target URL</label>
+                    <input type="url" id="edit_url" name="url" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_selenium_instructions">Automation Script</label>
+                    <textarea id="edit_selenium_instructions" name="selenium_instructions" placeholder="// Define your scraping automation steps"></textarea>
+                </div>
+                <div style="text-align: right; margin-top: 24px;">
+                    <button type="button" onclick="closeModal('editModal')" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-success">Update Job</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
