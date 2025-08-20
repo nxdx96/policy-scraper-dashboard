@@ -1,0 +1,7 @@
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+pg8000==1.30.2
+python-dotenv==1.0.0
+selenium==4.15.2
+beautifulsoup4==4.12.2
+requests==2.31.0
