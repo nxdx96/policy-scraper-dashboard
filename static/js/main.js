@@ -72,3 +72,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Job card toggle functionality
+function toggleJobCard(jobId) {
+    const detailsElement = document.getElementById('details-' + jobId);
+    const expandIcon = document.getElementById('expand-' + jobId);
+    const jobCard = detailsElement.closest('.job-card');
+    
+    if (detailsElement.style.display === 'none' || !detailsElement.style.display) {
+        // Expand
+        detailsElement.style.display = 'block';
+        expandIcon.classList.add('expanded');
+        jobCard.classList.add('expanded');
+    } else {
+        // Collapse
+        detailsElement.style.display = 'none';
+        expandIcon.classList.remove('expanded');
+        jobCard.classList.remove('expanded');
+    }
+}

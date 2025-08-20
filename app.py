@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import uuid
 import os
+import random
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,8 +15,16 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
+def generate_short_id():
+    """Generate a 5-digit unique ID"""
+    while True:
+        new_id = str(random.randint(10000, 99999))
+        # Check if this ID already exists
+        if not Job.query.filter_by(id=new_id).first():
+            return new_id
+
 class Job(db.Model):
-    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = db.Column(db.String(5), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     url = db.Column(db.Text, nullable=False)
     selenium_instructions = db.Column(db.Text, nullable=True)
@@ -58,6 +67,7 @@ def create_job():
             return redirect(url_for('index'))
         
         new_job = Job(
+            id=generate_short_id(),
             name=name,
             url=url,
             selenium_instructions=selenium_instructions
