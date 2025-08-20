@@ -43,15 +43,20 @@
         <div class="jobs-grid">
             {% for job in jobs %}
             <div class="job-card">
-                <div class="job-header">
-                    <div>
-                        <div class="job-title">{{ job.name }}</div>
+                <div class="job-header" onclick="toggleJobCard('{{ job.id }}')">
+                    <div class="job-summary">
                         <div class="job-id">{{ job.id }}</div>
+                        <div class="job-title">{{ job.name }}</div>
                     </div>
-                    <div class="job-status">READY</div>
+                    <div class="job-controls">
+                        <div class="job-status">READY</div>
+                        <div class="expand-icon" id="expand-{{ job.id }}">
+                            <span>▼</span>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="job-details">
+                <div class="job-details" id="details-{{ job.id }}" style="display: none;">
                     <div class="detail-item">
                         <span class="detail-icon">🌐</span>
                         <div class="detail-content">
@@ -77,13 +82,22 @@
                             <div class="code-block">{{ job.selenium_instructions or 'No automation script defined' }}</div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="job-actions">
-                    <button onclick="openEditModal('{{ job.id }}', '{{ job.name }}', '{{ job.url }}', {{ job.selenium_instructions|tojson }})" class="btn btn-success">Edit</button>
-                    <form method="POST" action="{{ url_for('delete_job', job_id=job.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this job?')">
-                        <button type="submit" class="btn btn-danger">Delete</button>
-                    </form>
+                    
+                    <div class="job-actions">
+                        <form method="POST" action="{{ url_for('run_job', job_id=job.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-primary">▶ Run</button>
+                        </form>
+                        <button class="btn btn-success edit-job-btn" 
+                                data-job-id="{{ job.id }}" 
+                                data-job-name="{{ job.name }}" 
+                                data-job-url="{{ job.url }}" 
+                                data-job-instructions="{{ job.selenium_instructions or '' }}"
+                                onclick="console.log('Direct onclick triggered'); event.stopPropagation(); openEditModal('{{ job.id }}', '{{ job.name|replace("'", "\\'") }}', '{{ job.url|replace("'", "\\'") }}', '{{ (job.selenium_instructions or '')|replace("'", "\\'")|replace('"', '\\"')|replace('\n', '\\n')|replace('\r', '\\r') }}', event);">Edit</button>
+                        <button onclick="showMacroHelp()" class="btn btn-secondary">Macros</button>
+                        <form method="POST" action="{{ url_for('delete_job', job_id=job.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this job?')">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
+                    </div>
                 </div>
             </div>
             {% else %}
@@ -120,11 +134,14 @@
                 </div>
                 <div class="form-group">
                     <label for="selenium_instructions">Automation Script</label>
-                    <textarea id="selenium_instructions" name="selenium_instructions" placeholder="// Define your scraping automation steps
-driver.get(url)
-element = driver.find_element(By.CLASS_NAME, 'content')
-data = element.text
-return data"></textarea>
+                    <textarea id="selenium_instructions" name="selenium_instructions" placeholder="# Example macro commands:
+CLICK_ELEMENT(selector='button.load-more', type='css')
+SCROLL_PAGE(direction='down', pixels=500)
+WAIT(seconds=3)
+EXTRACT_TEXT(selector='h1.title', type='css')
+SAVE_HTML(filename='page_data.html')
+
+# Click 'Macros' button for full documentation"></textarea>
                 </div>
                 <div style="text-align: right; margin-top: 24px;">
                     <button type="button" onclick="closeModal('createModal')" class="btn btn-secondary">Cancel</button>
@@ -149,13 +166,97 @@ return data"></textarea>
                 </div>
                 <div class="form-group">
                     <label for="edit_selenium_instructions">Automation Script</label>
-                    <textarea id="edit_selenium_instructions" name="selenium_instructions" placeholder="// Define your scraping automation steps"></textarea>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="color: var(--text-secondary); font-size: 12px;">Need help with macro commands?</span>
+                        <button type="button" onclick="showMacroHelp()" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;">📚 View Macros</button>
+                    </div>
+                    <textarea id="edit_selenium_instructions" name="selenium_instructions" placeholder="# Example macro commands:
+CLICK_ELEMENT(selector='button.load-more', type='css')
+SCROLL_PAGE(direction='down', pixels=500)
+WAIT(seconds=3)
+EXTRACT_TEXT(selector='h1.title', type='css')
+SAVE_HTML(filename='page_data.html')
+
+# Click 'View Macros' button for full documentation"></textarea>
                 </div>
                 <div style="text-align: right; margin-top: 24px;">
                     <button type="button" onclick="closeModal('editModal')" class="btn btn-secondary">Cancel</button>
                     <button type="submit" class="btn btn-success">Update Job</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="macroModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" onclick="closeModal('macroModal')">&times;</span>
+            <h2>📚 Scraping Macros Documentation</h2>
+            
+            <div class="macro-docs">
+                <div class="macro-item">
+                    <h3>🖱️ CLICK_ELEMENT</h3>
+                    <p>Clicks an element on the page</p>
+                    <div class="code-block">CLICK_ELEMENT(selector='button.submit', type='css')</div>
+                    <p><strong>Parameters:</strong></p>
+                    <ul>
+                        <li><code>selector</code> - CSS selector, XPath, ID, or class name</li>
+                        <li><code>type</code> - 'css', 'xpath', 'id', 'class' (default: 'css')</li>
+                    </ul>
+                </div>
+
+                <div class="macro-item">
+                    <h3>📜 SCROLL_PAGE</h3>
+                    <p>Scrolls the page in the specified direction</p>
+                    <div class="code-block">SCROLL_PAGE(direction='down', pixels=800)</div>
+                    <p><strong>Parameters:</strong></p>
+                    <ul>
+                        <li><code>direction</code> - 'down', 'up', 'top', 'bottom' (default: 'down')</li>
+                        <li><code>pixels</code> - Number of pixels to scroll (default: 500)</li>
+                    </ul>
+                </div>
+
+                <div class="macro-item">
+                    <h3>💾 SAVE_HTML</h3>
+                    <p>Saves the current page HTML to a file</p>
+                    <div class="code-block">SAVE_HTML(filename='scraped_data.html')</div>
+                    <p><strong>Parameters:</strong></p>
+                    <ul>
+                        <li><code>filename</code> - Output filename (optional, auto-generated if not provided)</li>
+                    </ul>
+                </div>
+
+                <div class="macro-item">
+                    <h3>⏱️ WAIT</h3>
+                    <p>Waits for the specified number of seconds</p>
+                    <div class="code-block">WAIT(seconds=5)</div>
+                    <p><strong>Parameters:</strong></p>
+                    <ul>
+                        <li><code>seconds</code> - Number of seconds to wait (default: 2)</li>
+                    </ul>
+                </div>
+
+                <div class="macro-item">
+                    <h3>📝 EXTRACT_TEXT</h3>
+                    <p>Extracts text from an element</p>
+                    <div class="code-block">EXTRACT_TEXT(selector='h1.title', type='css')</div>
+                    <p><strong>Parameters:</strong></p>
+                    <ul>
+                        <li><code>selector</code> - CSS selector, XPath, ID, or class name</li>
+                        <li><code>type</code> - 'css', 'xpath', 'id', 'class' (default: 'css')</li>
+                    </ul>
+                </div>
+
+                <div class="example-section">
+                    <h3>💡 Example Script</h3>
+                    <div class="code-block"># Complete scraping example
+WAIT(seconds=2)
+CLICK_ELEMENT(selector='button.load-more', type='css')
+SCROLL_PAGE(direction='down', pixels=1000)
+WAIT(seconds=3)
+EXTRACT_TEXT(selector='h1.main-title', type='css')
+SAVE_HTML(filename='complete_page.html')</div>
+                </div>
+            </div>
         </div>
     </div>
 

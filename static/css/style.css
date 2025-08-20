@@ -9,8 +9,8 @@
     --bg-secondary: #111111;
     --bg-tertiary: #1a1a1a;
     --bg-quaternary: #252525;
-    --accent-primary: #6366f1;
-    --accent-secondary: #8b5cf6;
+    --accent-primary: #d4a5a5;
+    --accent-secondary: #c89999;
     --text-primary: #ffffff;
     --text-secondary: #a1a1aa;
     --text-muted: #71717a;
@@ -115,15 +115,17 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    background: linear-gradient(135deg, #e8b8b8, var(--accent-primary), var(--accent-secondary));
     color: white;
-    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 14px rgba(212, 165, 165, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #5856eb, #7c3aed);
+    background: linear-gradient(135deg, #d4a5a5, #c89999, #b88888);
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 6px 20px rgba(212, 165, 165, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .btn-secondary {
@@ -171,15 +173,19 @@ body {
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
     border-radius: 12px;
-    padding: 24px;
+    padding: 16px 20px;
     transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .job-card:hover {
     border-color: var(--border-secondary);
-    transform: translateY(-2px);
+}
+
+.job-card.expanded {
+    padding: 20px 24px;
 }
 
 .job-card::before {
@@ -195,8 +201,47 @@ body {
 .job-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 20px;
+    align-items: center;
+    margin-bottom: 0;
+    cursor: pointer;
+    padding: 4px 0;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.job-header:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.job-summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.job-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.expand-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+}
+
+.expand-icon.expanded {
+    transform: rotate(180deg);
+    background: var(--accent-primary);
+    color: white;
 }
 
 .job-title {
@@ -210,11 +255,14 @@ body {
 .job-id {
     font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
-    color: var(--text-muted);
+    font-weight: 600;
+    color: var(--accent-primary);
     background: var(--bg-tertiary);
     padding: 4px 8px;
     border-radius: 4px;
     border: 1px solid var(--border-primary);
+    min-width: 60px;
+    text-align: center;
 }
 
 .job-status {
@@ -229,7 +277,10 @@ body {
 }
 
 .job-details {
-    margin-bottom: 20px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-primary);
 }
 
 .detail-item {
@@ -445,6 +496,65 @@ body {
     color: var(--text-muted);
     font-size: 12px;
     font-weight: 400;
+}
+
+.macro-docs {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.macro-item {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.macro-item:last-child {
+    border-bottom: none;
+}
+
+.macro-item h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--accent-primary);
+    margin-bottom: 8px;
+    font-size: 18px;
+}
+
+.macro-item p {
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+}
+
+.macro-item ul {
+    margin: 12px 0;
+    padding-left: 20px;
+}
+
+.macro-item li {
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.macro-item code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--accent-primary);
+    font-size: 13px;
+}
+
+.example-section {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 2px solid var(--border-secondary);
+}
+
+.example-section h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    font-size: 20px;
 }
 
 @media (max-width: 768px) {
